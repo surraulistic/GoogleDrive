@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "googledrive"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+python-multipart = "^0.0.20"
+ruff = "^0.8.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+extend-exclude = [
+    "migrations",
+]
+
+lint.ignore = [
+    "F403",    # star imports
+    "F405",    # probably undefined stuff from star imports
+    "E731",    # lambda expressions
+    "ARG004",  # Unused method argument
+    "B007",    # Loop control variable not used within loop body
+    "B024",    # Abstract classes without methods
+    "COM812",
+]
+
+lint.select = [
+    "E",    # default
+    "F",    # default
+    "B",    # bugbear, blind-except
+    "Q",    # quotes
+    "A",    # builtins
+    "PT",   # pytest-style
+    "INP",  # pep420
+    "SIM",  # simplify
+    "COM",
+    "T",    # prints
+    "C",   # comprehensions
+]
+
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+
+
+[tool.ruff.lint.flake8-annotations]
+ignore-fully-untyped = true
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
