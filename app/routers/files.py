@@ -14,8 +14,10 @@ router = APIRouter(prefix="/files", tags=["files"])
 async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str | None = File(default=None)):
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
-    path_to_save = directory_path if file_path in [str(user_id), '/', None] \
-        else Path(PurePath(directory_path, file_path))
+    if file_path in [str(user_id), '/', None]:
+        path_to_save = directory_path
+    else:
+        path_to_save = Path(PurePath(directory_path, file_path))
     if not path_to_save.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found")
     index = await find_last_file_with_name(path_to_save, file_name)
