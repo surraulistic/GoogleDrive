@@ -11,14 +11,18 @@ router = APIRouter(prefix="/files", tags=["files"])
 
 
 @router.post("/upload")
-async def upload_file(file: UploadFile, user_id: int = File(...)):
+async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str | None = File(default=None)):
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
-    if not directory_path.exists():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User folder not found")
-    index = await find_last_file_with_name(directory_path, file_name)
+    if file_path in [str(user_id), '/', None]:
+        path_to_save = directory_path
+    else:
+        path_to_save = Path(PurePath(directory_path, file_path))
+    if not path_to_save.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found")
+    index = await find_last_file_with_name(path_to_save, file_name)
     file_name = await increase_last_file_name(file_name, index)
-    with open(directory_path.joinpath(file_name), "wb+") as f:
+    with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
     return {"author_id": user_id, "filename": file_name}
 
@@ -34,7 +38,7 @@ async def create_user_dir(user_id: int):
 
 @router.post("/create_folder/{user_id}")
 async def create_folder(user_id: int, path: str, folder_name: str):
-    user_folder = Path(PurePath(r"files", str(user_id)))
+    user_folder = Path(PurePath("files", str(user_id)))
     if not user_folder.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User folder not found")
     path_to = Path(PurePath(user_folder, path)) if path != str(user_id) else user_folder
@@ -52,13 +56,3 @@ def get_all_directories_as_dict(user_id: int):
         tree_json = generate_tree_json(base_path, TreeFileTypes.folders)
         return tree_json
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folders tree not found")
-
-
-# def get_all_directories_as_dict(user_id: int) -> dict:
-#     directories = {}
-#     directories_path = Path(PurePath("files", str(user_id)))
-#     for subdir in directories_path.iterdir():
-#         if subdir.is_dir():
-#             directories[subdir.name] = subdir.resolve()
-#     return directories
-# Должен вернуться JSON в виде структуры всех папок
