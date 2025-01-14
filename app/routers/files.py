@@ -4,17 +4,28 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 
 from starlette import status
 
-from app.models.files import TreeFileTypes
+from app.models.files import TreeFileTypes, UserGroup
 from app.services.file_service import find_last_file_with_name, increase_last_file_name, generate_tree_json
 
 router = APIRouter(prefix="/files", tags=["files"])
 
 
+
+
+
 @router.post("/upload")
-async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str | None = File(default=None)):
+async def upload_file(
+        file: UploadFile,
+        user_id: int = File(...),
+        file_path: str | None = File(default=None)
+        ):
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
-    if file_path in [str(user_id), '/', None]:
+    file_size = file.size
+    user_group = get_user_group(user_id)
+    if file_size > 50 * 1024 * 1024 and user_group != "premium":
+        raise HTTPException(status_code=413, detail="Upload size is over limit. Max size is 50 MB. Buy Premium.")
+    if file_path in [str(user_id), "/", None]:
         path_to_save = directory_path
     else:
         path_to_save = Path(PurePath(directory_path, file_path))
@@ -24,7 +35,7 @@ async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str
     file_name = await increase_last_file_name(file_name, index)
     with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
-    return {"author_id": user_id, "filename": file_name}
+    return {"author_id": user_id, "filename": file_name, "path": path_to_save, "size": (file_size / 1024 / 1024)}
 
 
 @router.post("/create_user_dir/{user_id}")
@@ -56,3 +67,16 @@ def get_all_directories_as_dict(user_id: int):
         tree_json = generate_tree_json(base_path, TreeFileTypes.folders)
         return tree_json
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folders tree not found")
+
+
+users = [
+    {"user_id": 123, "group": UserGroup.PREMIUM},
+    {"user_id": 321, "group": UserGroup.REGULAR},
+]
+
+
+def get_user_group(user_id: int):
+    for user in users:
+        if user["user_id"] == user_id:
+            return user["group"]
+    raise HTTPException(status_code=404, detail="User not found")
