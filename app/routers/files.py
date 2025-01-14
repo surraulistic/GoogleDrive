@@ -35,7 +35,12 @@ async def upload_file(
     file_name = await increase_last_file_name(file_name, index)
     with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
-    return {"author_id": user_id, "filename": file_name, "path": path_to_save, "size": (file_size / 1024 / 1024)}
+    return {
+        "author_id": user_id,
+        "filename": file_name,
+        "path": path_to_save,
+        "size": f"{int(file_size / 1024 / 1024)} MB",
+    }
 
 
 @router.post("/create_user_dir/{user_id}")
