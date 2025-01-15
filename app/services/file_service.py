@@ -1,6 +1,9 @@
 from pathlib import Path
 
+from fastapi import HTTPException
+
 from app.models.files import TreeFileTypes
+from db.database import users
 
 
 async def find_last_file_with_name(file_path: Path, file_name: str) -> int:
@@ -40,3 +43,10 @@ def generate_tree_json(path: Path, file_type: TreeFileTypes) -> dict:
             else:
                 tree["children"].append({"name": item.name})
     return tree
+
+
+def get_user_group(user_id: int):
+    for user in users:
+        if user["user_id"] == user_id:
+            return user["group"]
+    raise HTTPException(status_code=404, detail="User not found")
