@@ -5,8 +5,13 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from starlette import status
 
 from app.models.files import TreeFileTypes
-from app.services.file_service import find_last_file_with_name, increase_last_file_name, generate_tree_json, \
-    get_user_group
+from app.services.file_service import (
+    find_last_file_with_name,
+    increase_last_file_name,
+    generate_tree_json,
+    get_user_group,
+)
+
 from app.settings import settings
 
 router = APIRouter(prefix="/files", tags=["files"])
