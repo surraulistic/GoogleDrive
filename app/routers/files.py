@@ -7,7 +7,7 @@ from starlette import status
 from app.models.files import TreeFileTypes
 from app.services.file_service import find_last_file_with_name, increase_last_file_name, generate_tree_json, \
     get_user_group
-from app.settings import Settings, prem_upload_limit, user_upload_limit
+from app.settings import settings
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -25,10 +25,16 @@ async def upload_file(
     file_name = file.filename
     file_size = file.size
     user_group = get_user_group(user_id)
-    if file_size > user_upload_limit and user_group != "premium":
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Upload size is over limit. Max size is 50 MB. Buy Premium.")
-    if file_size > prem_upload_limit:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="You reached uploading limit. Max size is 100 MB.")
+    if file_size > settings.user_upload_limit and user_group != "premium":
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Upload size is over limit. Max size is {settings.user_upload_limit} MB. Buy Premium."
+        )
+    if file_size > settings.prem_upload_limit:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"You reached uploading limit. Max size is {settings.prem_upload_limit} MB"
+        )
     if file_path in [str(user_id), "/", None]:
         path_to_save = directory_path
     else:
