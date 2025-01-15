@@ -5,16 +5,42 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from starlette import status
 
 from app.models.files import TreeFileTypes
-from app.services.file_service import find_last_file_with_name, increase_last_file_name, generate_tree_json
+from app.services.file_service import (
+    find_last_file_with_name,
+    increase_last_file_name,
+    generate_tree_json,
+    get_user_group,
+)
+
+from app.settings import settings
 
 router = APIRouter(prefix="/files", tags=["files"])
 
 
+
+
+
 @router.post("/upload")
-async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str | None = File(default=None)):
+async def upload_file(
+        file: UploadFile,
+        user_id: int = File(...),
+        file_path: str | None = File(default=None)
+        ):
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
-    if file_path in [str(user_id), '/', None]:
+    file_size = file.size
+    user_group = get_user_group(user_id)
+    if file_size > settings.user_upload_limit and user_group != "premium":
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Upload size is over limit. Max size is {settings.user_upload_limit} MB. Buy Premium."
+        )
+    if file_size > settings.prem_upload_limit:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"You reached uploading limit. Max size is {settings.prem_upload_limit} MB"
+        )
+    if file_path in [str(user_id), "/", None]:
         path_to_save = directory_path
     else:
         path_to_save = Path(PurePath(directory_path, file_path))
@@ -24,7 +50,12 @@ async def upload_file(file: UploadFile, user_id: int = File(...), file_path: str
     file_name = await increase_last_file_name(file_name, index)
     with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
-    return {"author_id": user_id, "filename": file_name}
+    return {
+        "author_id": user_id,
+        "filename": file_name,
+        "path": path_to_save,
+        "size": f"{int(file_size / 1024 / 1024)} MB",
+    }
 
 
 @router.post("/create_user_dir/{user_id}")
