@@ -1,23 +1,19 @@
 from pathlib import PurePath, Path
 
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, status
 
-from starlette import status
 
 from app.models.files import TreeFileTypes
 from app.services.file_service import (
     find_last_file_with_name,
     increase_last_file_name,
     generate_tree_json,
-    get_user_group,
 )
-
-from app.settings import settings
+from app.services.user_service import get_user_group
+from config import file_config
+from db.models import User
 
 router = APIRouter(prefix="/files", tags=["files"])
-
-
-
 
 
 @router.post("/upload")
@@ -29,16 +25,16 @@ async def upload_file(
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
     file_size = file.size
-    user_group = get_user_group(user_id)
-    if file_size > settings.user_upload_limit and user_group != "premium":
+    is_user_premium = get_user_group(User, "is_premium", "fcbfbe77-8f98-47cd-a047-98be725e2f39")
+    if file_size > file_config.user_upload_limit and not is_user_premium:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Upload size is over limit. Max size is {settings.user_upload_limit} MB. Buy Premium."
+            detail=f"Upload size is over limit. Max size is {file_config.user_upload_limit} MB. Buy Premium."
         )
-    if file_size > settings.prem_upload_limit:
+    if file_size > file_config.prem_upload_limit:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"You reached uploading limit. Max size is {settings.prem_upload_limit} MB"
+            detail=f"You reached upload limit. Max size is {file_config.prem_upload_limit} MB"
         )
     if file_path in [str(user_id), "/", None]:
         path_to_save = directory_path
@@ -54,7 +50,7 @@ async def upload_file(
         "author_id": user_id,
         "filename": file_name,
         "path": path_to_save,
-        "size": f"{int(file_size / 1024 / 1024)} MB",
+        # "size": f"{int(file_size / 1024 / 1024)} MB",
     }
 
 

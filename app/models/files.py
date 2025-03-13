@@ -11,9 +11,3 @@ class TreeFileTypes(StrEnum):
     all = "all"
     files = "files"
     folders = "folders"
-
-
-class UserGroup(StrEnum):
-    PREMIUM = "premium"
-    REGULAR = "regular"
-    ADMIN = "admin"
