@@ -1,12 +1,11 @@
-from typing import Annotated
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
-from starlette import status
 
-from app.auth import oauth2_scheme
+
 from app.models import schemas
-from app.services.user_service import get_all_users, register, get_user_by_email
+from app.services.user_service import get_all_users, register, get_user_by_email, assign_role
 from db.connector import get_db
 
 
@@ -24,13 +23,20 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 
 @router.post("/register", response_model=schemas.LiteUser, status_code=status.HTTP_201_CREATED)
-def register_user(user_data: schemas.UserCreate):
+async def register_user(user_data: schemas.UserCreate):
     if get_user_by_email(email=user_data.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
     user = register(user_data=user_data)
     return user
 
 
-@router.post("/login", response_model=schemas.LiteUser)
-def get_user_by_id(access_token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
-    ...
+# @router.post("/login", response_model=schemas.LiteUser)
+# async def get_user_by_id(access_token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+#     ...
+
+
+@router.post("/users/groups", response_model=None, status_code=status.HTTP_201_CREATED)
+async def set_user_role(user_id: uuid.UUID, role_id: uuid.UUID):
+    result = assign_role(user_id, role_id)
+    if not result:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot assign role")

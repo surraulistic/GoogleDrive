@@ -1,10 +1,11 @@
 from db.models.users import User
-from db.models.token import Token
 from db.models.base import Base
+from db.models.roles import Role, UserRole
 
 
 __all__ = [
     "User",
     "Base",
-    "Token",
+    "Role",
+    "UserRole",
 ]

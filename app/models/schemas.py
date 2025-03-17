@@ -30,9 +30,13 @@ class UserInDB(User):
     hashed_password: str
 
 
-class UserGroup(StrEnum):
+class UserRole(StrEnum):
     PREMIUM = "premium"
     REGULAR = "regular"
     ADMIN = "admin"
+
+
+class RoleRequest(UserBase):
+    role: UserRole
 
 

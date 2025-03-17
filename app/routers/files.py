@@ -1,15 +1,16 @@
+import uuid
 from pathlib import PurePath, Path
 
-from fastapi import APIRouter, File, UploadFile, HTTPException, status
+from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends
 
-
+from app.middleware.upload_limits import UploadFileLimiter, upload_file_limiter
 from app.models.files import TreeFileTypes
 from app.services.file_service import (
     find_last_file_with_name,
     increase_last_file_name,
     generate_tree_json,
 )
-from app.services.user_service import get_user_group
+from app.services.user_service import get_user_role
 from config import file_config
 from db.models import User
 
@@ -19,23 +20,12 @@ router = APIRouter(prefix="/files", tags=["files"])
 @router.post("/upload")
 async def upload_file(
         file: UploadFile,
-        user_id: int = File(...),
-        file_path: str | None = File(default=None)
+        user_id: uuid.UUID = File(...),
+        file_path: str | None = File(default=None),
+        file_limiter: UploadFileLimiter = Depends(lambda: upload_file_limiter)
         ):
     directory_path = Path(PurePath("files", str(user_id)))
     file_name = file.filename
-    file_size = file.size
-    is_user_premium = get_user_group(User, "is_premium", "fcbfbe77-8f98-47cd-a047-98be725e2f39")
-    if file_size > file_config.user_upload_limit and not is_user_premium:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Upload size is over limit. Max size is {file_config.user_upload_limit} MB. Buy Premium."
-        )
-    if file_size > file_config.prem_upload_limit:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"You reached upload limit. Max size is {file_config.prem_upload_limit} MB"
-        )
     if file_path in [str(user_id), "/", None]:
         path_to_save = directory_path
     else:
@@ -44,6 +34,7 @@ async def upload_file(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found")
     index = await find_last_file_with_name(path_to_save, file_name)
     file_name = await increase_last_file_name(file_name, index)
+    file = await file_limiter(file)
     with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
     return {
@@ -55,7 +46,7 @@ async def upload_file(
 
 
 @router.post("/create_user_dir/{user_id}")
-async def create_user_dir(user_id: int):
+async def create_user_dir(user_id: uuid.UUID):
     user_folder = Path(PurePath("files", str(user_id)))
     if not user_folder.exists():
         user_folder.mkdir(parents=True)

@@ -12,16 +12,14 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("/token", status_code=status.HTTP_201_CREATED)
+@router.post("/token", status_code=status.HTTP_200_OK)
 def send_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
-    xx = create_access_token(user_data=form_data)
-    logger.info(xx)
-    return xx
+    return create_access_token(user_data=form_data)
 
 
 @router.get("/users/me/", response_model=User)
