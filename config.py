@@ -40,7 +40,7 @@ class ApiConfig(BaseSettings):
 
 
 class FileConfig(BaseSettings):
-    user_upload_limit_mb: int = 30
+    user_upload_limit_mb: int = 50
     prem_upload_limit_mb: int = 100
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-from app.models.files import TreeFileTypes
+from app.schemas.files import TreeFileTypes
 
 
 async def find_last_file_with_name(file_path: Path, file_name: str) -> int:

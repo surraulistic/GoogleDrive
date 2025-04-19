@@ -36,6 +36,11 @@ class UserRole(StrEnum):
     ADMIN = "admin"
 
 
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
 class RoleRequest(UserBase):
     role: UserRole
 

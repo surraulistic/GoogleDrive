@@ -1,0 +1,70 @@
+import logging
+import uuid
+from datetime import timedelta, datetime, timezone
+import jwt
+from fastapi.security import OAuth2PasswordRequestForm
+
+from app.auth import pwd_context, SECRET_KEY, ALGORITHM
+from app.schemas.auth import Token
+from app.schemas.users import UserCreate
+from app.services.user_service import get_user_by_email, get_user_by_id
+from db.connector import db_connector
+from db.models.users import User
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
+
+
+def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delta: timedelta | None = None):
+    to_encode = {
+        "grant_type": user_data.grant_type,
+        "username": user_data.username,
+        "password": user_data.password,
+        "scopes": user_data.scopes,
+        "client_id": user_data.client_id,
+        "client_secret": user_data.client_secret,
+    }
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return Token(access_token=encoded_jwt)
+
+
+def authenticate_user(username: str, password: str):
+    user = get_user_by_email(username)
+    if not user:
+        return False
+    if not verify_password(password, user.password):
+        return False
+    return user
+
+
+def verify_password(plain_password, password):
+    return pwd_context.verify(plain_password, password)
+
+
+def change_pwd(user_id: uuid.UUID, new_pwd: str):
+    with db_connector.session() as session:
+        user = get_user_by_id(user_id)
+        user.password = pwd_context.hash(new_pwd)
+        session.add(user)
+        # session.refresh(user)
+        session.flush()
+        logger.info(f"Password for user {user_id} successfully updated.")
+        return None
+
+
+def register(user_data: UserCreate):
+    with db_connector.session() as session:
+        user = User(email=user_data.email)
+        user.password = pwd_context.hash(user_data.password)
+        session.add(user)
+        session.flush()
+        return user
+
+
+
