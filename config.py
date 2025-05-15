@@ -12,7 +12,7 @@ class InfrastructureConfig(BaseSettings):
     db_name: str
     db_host: str
     db_port: int = 5432
-    db_driver: str = "postgresql"
+    db_driver: str = "postgresql+asyncpg"
     postgres_dsn: PostgresDsn | None = None
 
 

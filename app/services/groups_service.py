@@ -4,8 +4,8 @@ from db.connector import db_connector
 from db.models import Role, UserRole
 
 
-def add_role(role_name: str):
-    with db_connector.session() as session:
+async def add_role(role_name: str):
+    async with db_connector.session() as session:
         new_role = Role(name=role_name)
         session.add(new_role)
         session.commit()
@@ -13,8 +13,8 @@ def add_role(role_name: str):
         return new_role
 
 
-def assign_role(user_id: uuid.UUID, role_id: uuid.UUID) -> bool:
-    with db_connector.session() as session:
+async def assign_role(user_id: uuid.UUID, role_id: uuid.UUID) -> bool:
+    async with db_connector.session() as session:
         role = session.query(Role).filter_by(id=role_id).first()
         if not role:
             return False

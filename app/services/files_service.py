@@ -1,6 +1,4 @@
 from pathlib import Path
-
-
 from app.schemas.files import TreeFileTypes
 
 
@@ -42,4 +40,7 @@ def generate_tree_json(path: Path, file_type: TreeFileTypes) -> dict:
                 tree["children"].append({"name": item.name})
     return tree
 
+
+async def get_file_path_by_id(file_id: str):
+    pass
 

@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.auth import pwd_context, SECRET_KEY, ALGORITHM
 from app.schemas.auth import Token
 from app.schemas.users import UserCreate
-from app.services.user_service import get_user_by_email, get_user_by_id
+from app.services.users_service import get_user_by_email, get_user_by_id
 from db.connector import db_connector
 from db.models.users import User
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
 
-def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delta: timedelta | None = None):
+async def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delta: timedelta | None = None):
     to_encode = {
         "grant_type": user_data.grant_type,
         "username": user_data.username,
@@ -34,8 +34,8 @@ def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delta: tim
     return Token(access_token=encoded_jwt)
 
 
-def authenticate_user(username: str, password: str):
-    user = get_user_by_email(username)
+async def authenticate_user(username: str, password: str):
+    user = await get_user_by_email(username)
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -47,9 +47,9 @@ def verify_password(plain_password, password):
     return pwd_context.verify(plain_password, password)
 
 
-def change_pwd(user_id: uuid.UUID, new_pwd: str):
-    with db_connector.session() as session:
-        user = get_user_by_id(user_id)
+async def change_pwd(user_id: uuid.UUID, new_pwd: str):
+    async with db_connector.async_session() as session:
+        user = await get_user_by_id(user_id)
         user.password = pwd_context.hash(new_pwd)
         session.add(user)
         # session.refresh(user)
@@ -58,8 +58,8 @@ def change_pwd(user_id: uuid.UUID, new_pwd: str):
         return None
 
 
-def register(user_data: UserCreate):
-    with db_connector.session() as session:
+async def register(user_data: UserCreate):
+    async with db_connector.async_session() as session:
         user = User(email=user_data.email)
         user.password = pwd_context.hash(user_data.password)
         session.add(user)

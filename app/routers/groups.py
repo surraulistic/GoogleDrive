@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from starlette import status
 
 from app.routers.users import router
-from app.services.group_service import assign_role
+from app.services.groups_service import assign_role
 
 
 @router.post("/groups", response_model=None, status_code=status.HTTP_201_CREATED)

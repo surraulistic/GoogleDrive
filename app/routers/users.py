@@ -1,26 +1,25 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from app.schemas import users
 from app.schemas.users import User
-from app.services.user_service import get_all_users, get_current_active_user
-from db.connector import get_db
+from app.services.users_service import get_all_users, get_current_active_user
+# from db.connector import get_db
 
 
 router = APIRouter()
 
 
 @router.get("/", response_model=list[users.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = get_all_users(db, skip=skip, limit=limit)
+async def read_users(skip: int = 0, limit: int = 100):
+    db_users = await get_all_users(skip=skip, limit=limit)
     return [users.User(
         id = user.id,
         username = user.username,
         is_active = user.is_active,
         email = user.email,
-    ) for user in users]
+    ) for user in db_users]
 
 
 @router.get("/me", response_model=User)

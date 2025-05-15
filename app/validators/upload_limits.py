@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, File, status
 
-from app.services.user_service import get_user_role
+from app.services.users_service import get_user_role
 from config import file_config
 
 
