@@ -1,6 +1,5 @@
 from pathlib import Path
-
-from app.models.files import TreeFileTypes
+from app.schemas.files import TreeFileTypes
 
 
 async def find_last_file_with_name(file_path: Path, file_name: str) -> int:
@@ -40,3 +39,8 @@ def generate_tree_json(path: Path, file_type: TreeFileTypes) -> dict:
             else:
                 tree["children"].append({"name": item.name})
     return tree
+
+
+async def get_file_path_by_id(file_id: str):
+    pass
+
