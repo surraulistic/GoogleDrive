@@ -13,14 +13,13 @@ from app.services.users_service import get_user_by_email, get_current_user
 router = APIRouter()
 
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
 
 @router.post("/token", status_code=status.HTTP_200_OK)
 async def send_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_creds = await authenticate_user(form_data.username, form_data.password)
-    # logger.info(f"user_creds: {user_creds}")
     if not user_creds:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

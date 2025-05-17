@@ -10,20 +10,32 @@ from app.routers.auth import router as auth_router
 app = FastAPI()
 
 
-app.include_router(files_router)
+app.include_router(
+    router=files_router,
+    prefix="/files",
+    tags=["files"]
+)
+
+
 
 app.include_router(
     router=users_router,
     prefix="/users",
+    tags=["users"]
 )
+
 
 app.include_router(
     router=auth_router,
     prefix="/auth",
+    tags=["auth"]
 )
 
 
-app.add_middleware(AuthMiddleware, excluded_routes={""})
+app.add_middleware(
+    AuthMiddleware,
+    excluded_routes={"/files/download/"}
+)
 
 
 if __name__ == "__main__":

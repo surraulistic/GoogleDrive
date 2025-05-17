@@ -18,8 +18,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self.excluded_routes = set(excluded_routes) if excluded_routes else set()
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        logger.info(path)
-        if path.startswith(self.protected_prefix) and path not in self.excluded_routes:
+        if path.startswith(self.protected_prefix) and not any(path.startswith(r) for r in self.excluded_routes):
             token = request.headers.get("Authorization")
             logger.info(token)
             if not token or not token.startswith("Bearer "):

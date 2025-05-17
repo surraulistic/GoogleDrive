@@ -16,16 +16,17 @@ from app.services.files_service import (
 )
 
 
-router = APIRouter(prefix="/files", tags=["files"])
+router = APIRouter()
+
+
 file_storage: dict[str, str] = {}
 
 
 @router.post("/upload", dependencies=[Depends(oauth2_scheme)])
 async def upload_file(
-        file: UploadFile,
+        file: UploadFile = Depends(upload_file_limiter),
         current_user: User = Depends(get_current_user),
         file_path: str | None = File(default=None),
-        file_limiter: UploadFileLimiter = Depends(lambda: upload_file_limiter),
         ):
     file_id = str(uuid.uuid4())
     user_id = current_user.id
@@ -40,21 +41,20 @@ async def upload_file(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found")
     index = await find_last_file_with_name(path_to_save, file_name)
     file_name = await increase_last_file_name(file_name, index)
-    file = await file_limiter(file)
     full_file_path = path_to_save.joinpath(file_name)
     with open(path_to_save.joinpath(file_name), "wb+") as f:
         f.write(await file.read())
     file_storage[file_id] = str(full_file_path)
     return {
         "author_id": user_id,
+        "file_id": file_id,
         "filename": file_name,
         "path": path_to_save,
-        "size": f"{int(file_size / 1024 / 1024)} MB",
-        "file_id": file_id,
+        "size": f"{float(file_size / 1024 / 1024)} MB",
     }
 
 
-@router.get("/download/{file_id}", dependencies=[Depends(oauth2_scheme)])
+@router.get("/download/{file_id}")
 async def download_file(file_id: str):
     file_path = file_storage.get(file_id)
     if not file_path:

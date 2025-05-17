@@ -1,12 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.schemas import users
 from app.schemas.users import User
-from app.services.users_service import get_all_users, get_current_active_user
-# from db.connector import get_db
-
+from app.services.users_service import get_all_users, get_current_active_user, get_user_role_id, get_role_by_id
 
 router = APIRouter()
 
@@ -24,9 +22,18 @@ async def read_users(skip: int = 0, limit: int = 100):
 
 @router.get("/me", response_model=User)
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
+        current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     return current_user
+
+
+@router.get("/me/roles", response_model=list[str], status_code=status.HTTP_200_OK)
+async def get_current_user_role(
+    current_user = Depends(get_current_active_user),
+):
+    roles_ids = await get_user_role_id(current_user.id)
+    roles = await get_role_by_id(roles_ids)
+    return roles
 
 
 # @router.get("/users/me/items/")

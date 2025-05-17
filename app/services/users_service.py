@@ -5,9 +5,7 @@ from typing import Annotated
 import jwt
 from fastapi import Depends, HTTPException
 from jwt import InvalidTokenError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy.orm import Session
 from sqlalchemy import select
 from starlette import status
 
@@ -16,12 +14,12 @@ from app.schemas.auth import TokenData
 
 from db.connector import db_connector
 from db.models import users
-from db.models.roles import UserRole
+from db.models.roles import UserRole, Role
 from db.models.users import User
 
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
 
 async def get_all_users(skip: int = 0, limit: int = 100):
@@ -41,7 +39,7 @@ async def get_user_by_id(user_id: uuid.UUID):
         return await session.scalar(select(User).where(User.id == user_id))
 
 
-async def get_user_role(user_id: uuid.UUID):
+async def get_user_role_id(user_id: uuid.UUID):
     async with db_connector.async_session() as session:
         stmt = select(UserRole.role_id).where(UserRole.user_id == user_id)
         result = await session.execute(stmt)
@@ -49,6 +47,18 @@ async def get_user_role(user_id: uuid.UUID):
         if roles:
             return [str(role[0]) for role in roles]
         return []
+
+
+async def get_role_by_id(roles_id: list[str]):
+    uuid_ids = [uuid.UUID(role_id) for role_id in roles_id]
+    async with db_connector.async_session() as session:
+        stmt = select(Role.name).where(Role.id.in_(uuid_ids))
+        result = await session.execute(stmt)
+        roles = result.scalars().all()
+        if roles:
+            return roles
+        return []
+
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
