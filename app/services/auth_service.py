@@ -1,19 +1,15 @@
-import logging
 import uuid
 from datetime import timedelta, datetime, timezone
 import jwt
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.auth import pwd_context, SECRET_KEY, ALGORITHM
+from app.auth.auth_config import pwd_context
 from app.schemas.auth import Token
 from app.schemas.users import UserCreate
 from app.services.users_service import get_user_by_email, get_user_by_id
+from config import settings
 from db.connector import db_connector
 from db.models.users import User
-
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
 
 async def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delta: timedelta | None = None):
@@ -30,7 +26,7 @@ async def create_access_token(user_data: OAuth2PasswordRequestForm, expires_delt
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.auth_config.secret_key, algorithm=settings.auth_config.algorithm)
     return Token(access_token=encoded_jwt)
 
 
@@ -52,9 +48,7 @@ async def change_pwd(user_id: uuid.UUID, new_pwd: str):
         user = await get_user_by_id(user_id)
         user.password = pwd_context.hash(new_pwd)
         session.add(user)
-        # session.refresh(user)
         session.flush()
-        logger.info(f"Password for user {user_id} successfully updated.")
         return None
 
 

@@ -1,13 +1,12 @@
 import os
 import uuid
 from pathlib import PurePath, Path
-# from app.validators.upload_limits import file_size
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends
 from fastapi.responses import FileResponse
-from app.auth import oauth2_scheme
+from app.auth.auth_config import oauth2_scheme
 from app.schemas.users import User
 from app.services.users_service import get_current_user
-from app.validators.upload_limits import UploadFileLimiter, upload_file_limiter
+from app.validators.upload_limits import upload_file_limiter
 from app.schemas.files import TreeFileTypes
 from app.services.files_service import (
     find_last_file_with_name,
@@ -69,7 +68,7 @@ async def create_user_dir(current_user: User = Depends(get_current_user)):
     if not user_folder.exists():
         user_folder.mkdir(parents=True)
         return user_folder
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User folder already exists")
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User directory already exists")
 
 
 @router.post("/create_folder/{user_id}", dependencies=[Depends(oauth2_scheme)])
@@ -81,7 +80,7 @@ async def create_folder(
     user_id = current_user.id
     user_folder = Path(PurePath("files", str(user_id)))
     if not user_folder.exists():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User folder not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User directory not found")
     path_to = Path(PurePath(user_folder, path)) if path != str(user_id) else user_folder
     if not path_to.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found")

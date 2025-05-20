@@ -3,18 +3,19 @@ from pydantic import PostgresDsn, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 load_dotenv()
 
 
 class InfrastructureConfig(BaseSettings):
-    db_user: str
-    db_password: str
-    db_name: str
-    db_host: str
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    db_user: str = None
+    db_password: str = None
+    db_name: str = None
+    db_host: str = None
     db_port: int = 5432
     db_driver: str = "postgresql+asyncpg"
     postgres_dsn: PostgresDsn | None = None
-
 
     @field_validator("postgres_dsn", mode="after")
     @classmethod
@@ -34,9 +35,17 @@ class ApiConfig(BaseSettings):
 
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    RELOAD: bool = False
+    RELOAD: bool = True
     WORKERS: int = 1
     ALLOWED_HOSTS: list[str] = ["*"]
+
+
+class AuthConfig(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="auth_", extra="ignore")
+
+    secret_key: str = None
+    algorithm: str = None
+    access_token_expire_minutes: int = None
 
 
 class FileConfig(BaseSettings):
@@ -45,13 +54,11 @@ class FileConfig(BaseSettings):
     admin_upload_limit: int = 100 * 1024 * 1024
 
 
-file_config = FileConfig()
-
-
 class Settings(BaseSettings):
     infrastructure_config: InfrastructureConfig = InfrastructureConfig()
     api_config: ApiConfig = ApiConfig()
     file_config: FileConfig = FileConfig()
+    auth_config: AuthConfig = AuthConfig()
 
 
 settings = Settings()

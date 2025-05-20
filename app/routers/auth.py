@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.auth import oauth2_scheme, pwd_context
+from app.auth.auth_config import pwd_context, oauth2_scheme
 from app.services.auth_service import create_access_token, authenticate_user, register, change_pwd
 from app.schemas.users import ChangePasswordRequest, User
 from app.schemas import users

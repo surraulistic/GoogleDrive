@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
+from config import settings
 from app.middleware.auth_require import AuthMiddleware
 from app.routers.files import router as files_router
 from app.routers.users import router as users_router
@@ -15,7 +16,6 @@ app.include_router(
     prefix="/files",
     tags=["files"]
 )
-
 
 
 app.include_router(
@@ -39,4 +39,4 @@ app.add_middleware(
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host=settings.api_config.HOST, port=settings.api_config.PORT, reload=settings.api_config.RELOAD)

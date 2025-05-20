@@ -5,11 +5,11 @@ from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, File, status, Depends
 
-from app.auth import oauth2_scheme
+from app.auth.auth_config import oauth2_scheme
 from app.routers.auth import send_token
 from app.routers.users import get_current_user_role
 from app.services.users_service import get_user_role_id, get_current_active_user, get_role_by_id
-from config import file_config
+from config import settings
 from db.models import User
 
 
@@ -23,22 +23,22 @@ class UploadFileLimiter:
         user_roles = await get_role_by_id(roles_id)
         file_size = file.size
 
-        if file_size > file_config.user_upload_limit and 'premium' not in user_roles:
+        if file_size > settings.user_upload_limit and 'premium' not in user_roles:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"Upload size is over limit. Max file size is {file_config.user_upload_limit/1024/1024} MB. Try Premium subscription."
+                detail=f"Upload size is over limit. Max file size is {settings.user_upload_limit/1024/1024} MB. Try Premium subscription."
             )
 
-        if file_size > file_config.prem_upload_limit and 'admin' not in user_roles:
+        if file_size > settings.prem_upload_limit and 'admin' not in user_roles:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"You reached upload limit for premiums. Max file size is {file_config.prem_upload_limit/1024/1024} MB."
+                detail=f"You reached upload limit for premiums. Max file size is {settings.prem_upload_limit/1024/1024} MB."
             )
 
-        if file_size > file_config.admin_upload_limit:
+        if file_size > settings.admin_upload_limit:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"You reached upload limit for admins. Max file size is {file_config.prem_upload_limit/1024/1024} MB."
+                detail=f"You reached upload limit for admins. Max file size is {settings.prem_upload_limit/1024/1024} MB."
             )
         return file
 

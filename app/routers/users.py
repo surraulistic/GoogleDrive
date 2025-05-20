@@ -34,16 +34,3 @@ async def get_current_user_role(
     roles_ids = await get_user_role_id(current_user.id)
     roles = await get_role_by_id(roles_ids)
     return roles
-
-
-# @router.get("/users/me/items/")
-# async def read_own_items(
-#     current_user: Annotated[User, Depends(get_current_active_user)],
-# ):
-#     return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-# @router.post("/login", response_model=schemas.LiteUser)
-# async def get_user_by_id(access_token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
-#     ...
-

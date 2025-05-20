@@ -7,8 +7,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 
 from config import settings
 
-logger = logging.getLogger(__name__)
-
 
 class AsyncDatabaseConnector:
     def __init__(self, db_url: PostgresDsn = settings.infrastructure_config.postgres_dsn):
@@ -37,18 +35,6 @@ class AsyncDatabaseConnector:
                 finally:
                     await session.close()
         return _session_gen()
-
-    # @asynccontextmanager
-    # async def session(self) -> AsyncGenerator[AsyncSession, None]:
-        # async with self.session_factory() as session:
-        #     try:
-        #         yield session
-        #         await session.commit()
-        #     except Exception:
-        #         await session.rollback()
-        #         logger.error(traceback.format_exc())
-        #     finally:
-        #         await session.close()
 
 
 db_connector = AsyncDatabaseConnector()
